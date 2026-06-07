@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +15,15 @@ from .graph import GraphIndex
 from .models import Severity
 from .output import github_output, json_output
 from .output.terminal import render
+
+
+def _build_llm(enable: bool, repo: Path):
+    """构造 LLM judge：仅在显式启用且有 key 时；否则返回 None（B 层跳过）。"""
+    if not enable or not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    from .llm import LLMJudge
+
+    return LLMJudge()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -31,6 +41,12 @@ def main(argv: list[str] | None = None) -> int:
         default="terminal",
         help="输出格式（json 供 CI 集成；github 为 PR 评论 markdown）",
     )
+    ap.add_argument(
+        "--enable-llm",
+        action="store_true",
+        help="启用 B 层 LLM 检查（需 ANTHROPIC_API_KEY；默认关闭，不误花钱）",
+    )
+    ap.add_argument("--pr-description", default="", help="PR 描述，供 scope-creep 检查")
     args = ap.parse_args(argv)
 
     repo = Path(args.repo).resolve()
@@ -44,6 +60,8 @@ def main(argv: list[str] | None = None) -> int:
         repo=repo,
         python_deps=load_python_deps(repo),
         graph=GraphIndex.load(repo),
+        llm=_build_llm(args.enable_llm, repo),
+        pr_description=args.pr_description,
     )
 
     findings = []

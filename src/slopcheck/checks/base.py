@@ -15,6 +15,8 @@ class CheckContext:
     repo: Path
     python_deps: PythonDeps | None
     graph: GraphIndex | None
+    llm: object | None = None  # B 层 judge（有 .judge() 的对象），None 则跳过 LLM 检查
+    pr_description: str = ""
 
 
 class Check:

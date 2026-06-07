@@ -15,7 +15,8 @@
 | A（纯 AST） | stub-implementation / swallowed-exception | ✅ M1.x |
 | A（图谱） | hallucinated-symbol / reuse-existing | ✅ M1.x |
 | A（图谱） | signature-mismatch | ⬜ |
-| B（LLM 语义） | fake-test / missing-test / scope-creep / drift | ⬜ M2 |
+| B（LLM，需 `--enable-llm`） | fake-test / scope-creep | ✅ M2 |
+| B（LLM） | missing-test / drift | ⬜ |
 
 ## 用法
 
@@ -31,6 +32,9 @@ uv run slopcheck --repo /path/to/repo --git-args 'HEAD~1'
 
 # warning 也算失败（默认 hallucinated-import 是 warning，不致 CI 失败）
 uv run slopcheck --strict ...
+
+# 启用 B 层 LLM 检查（需 anthropic 包 + ANTHROPIC_API_KEY；默认关闭，不误花钱）
+uv run --extra llm slopcheck --enable-llm --pr-description "本 PR 做了 X" --repo /path/to/repo
 ```
 
 ## 用作 GitHub Action
