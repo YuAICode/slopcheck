@@ -1,0 +1,53 @@
+# slopcheck
+
+> AI-aware code review —— 专审 **AI 生成代码**的特有失败模式，用代码知识图谱做**确定性事实校验**。
+> 通用 review 工具靠 LLM 读 diff（LLM 自己也会幻觉）；slopcheck 用 [graphify](https://github.com/) 的图谱确定性地回答"这个调用/包到底存不存在"。
+
+详细设计见 [`../E1-AI代码验证-spec.md`](../E1-AI代码验证-spec.md)。
+
+## 状态：M1（脚手架）
+
+已实现 **A 层第一个确定性检查**：`hallucinated-import`——抓 AI 幻觉/未声明的 import（含 slopsquatting 供应链风险）。
+
+| 层 | 检查 | 状态 |
+| --- | --- | --- |
+| A（确定性） | hallucinated-import | ✅ M1 |
+| A（纯 AST） | stub-implementation / swallowed-exception | ✅ M1.x |
+| A（图谱） | hallucinated-symbol / reuse-existing | ✅ M1.x |
+| A（图谱） | signature-mismatch | ⬜ |
+| B（LLM 语义） | fake-test / missing-test / scope-creep / drift | ⬜ M2 |
+
+## 用法
+
+```bash
+# 审当前 git 改动（working tree）
+uv run slopcheck --repo /path/to/repo
+
+# 审某个 diff 文件（CI / PR 场景）
+uv run slopcheck --repo /path/to/repo --diff-file pr.diff
+
+# 审到上一个提交的变更
+uv run slopcheck --repo /path/to/repo --git-args 'HEAD~1'
+
+# warning 也算失败（默认 hallucinated-import 是 warning，不致 CI 失败）
+uv run slopcheck --strict ...
+```
+
+## 开发
+
+```bash
+uv run pytest        # 离线测试，零外部依赖
+```
+
+## 架构（M1）
+
+```
+diff → parse_unified_diff → checks(A层) → terminal 输出
+                              ↑
+              deps（依赖清单/本地模块） + graph.json（M2 用）
+```
+
+- `diff.py` 解析 unified diff，提取新增行 + 正确行号
+- `deps.py` 加载 pyproject/requirements + 本地模块，判定 import 是否已知（含别名表）
+- `graph.py` 加载 `graphify-out/graph.json`，符号索引（供 M2 的幻觉调用/复用检查）
+- `checks/` 检查项；`output/` 输出适配器
