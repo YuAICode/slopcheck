@@ -33,6 +33,34 @@ uv run slopcheck --repo /path/to/repo --git-args 'HEAD~1'
 uv run slopcheck --strict ...
 ```
 
+## 用作 GitHub Action
+
+在目标仓库加 `.github/workflows/slopcheck.yml`：
+
+```yaml
+name: slopcheck
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write        # 用于在 PR 上发评论
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0       # 需要完整历史才能算 PR diff
+      - uses: YuAICode/slopcheck@main
+        with:
+          strict: "false"      # 设 "true" 则有问题时让 CI 失败
+```
+
+会在 PR 上发一条 sticky 评论汇总发现（重复运行只更新同一条）。
+
+> 注：图谱类检查（`hallucinated-symbol` / `reuse-existing`）需要目标仓库存在
+> `graphify-out/graph.json`；没有时这两项自动跳过，`hallucinated-import` /
+> `stub-implementation` / `swallowed-exception` 三项照常工作。
+
 ## 开发
 
 ```bash

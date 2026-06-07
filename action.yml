@@ -1,0 +1,62 @@
+name: "slopcheck"
+description: "AI-aware code review: catch hallucinations in AI-generated diffs"
+branding:
+  icon: "alert-triangle"
+  color: "purple"
+
+inputs:
+  strict:
+    description: "warning 也算失败（CI 红）"
+    default: "false"
+  github-token:
+    description: "用于在 PR 上发评论的 token"
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.2.0
+
+    - name: Run slopcheck
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        REPO: ${{ github.repository }}
+        STRICT: ${{ inputs.strict }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -o pipefail
+        cd "$GITHUB_WORKSPACE"
+
+        # 取 PR diff（base...head）；非 PR 场景退化为最近一次改动
+        if [ -n "$BASE_SHA" ]; then
+          git fetch --no-tags --depth=1 origin "$BASE_SHA" 2>/dev/null || true
+          git diff "$BASE_SHA"...HEAD > /tmp/slop.diff 2>/dev/null || git diff "$BASE_SHA" > /tmp/slop.diff
+        else
+          git diff HEAD~1 > /tmp/slop.diff 2>/dev/null || git diff > /tmp/slop.diff
+        fi
+
+        RUN="uvx --quiet --from $ACTION_PATH slopcheck --repo $GITHUB_WORKSPACE --diff-file /tmp/slop.diff"
+
+        # 人读结果进 job summary
+        $RUN >> "$GITHUB_STEP_SUMMARY" || true
+
+        # PR sticky 评论
+        if [ -n "$PR_NUMBER" ]; then
+          $RUN --format github > /tmp/slop_body.md
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq 'map(select(.body | startswith("<!-- slopcheck -->")))[0].id' 2>/dev/null)
+          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -F body=@/tmp/slop_body.md >/dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@/tmp/slop_body.md >/dev/null
+          fi
+        fi
+
+        # 退出码：strict 时有 warning/error 则失败
+        if [ "$STRICT" = "true" ]; then
+          $RUN --strict >/dev/null
+        fi

@@ -1,7 +1,7 @@
 import json
 
 from slopcheck.models import Finding, Severity
-from slopcheck.output import json_output
+from slopcheck.output import github_output, json_output
 from slopcheck.output.terminal import render
 
 _F = [
@@ -36,3 +36,16 @@ def test_json_roundtrip():
 
 def test_json_empty():
     assert json.loads(json_output.render([])) == []
+
+
+def test_github_empty():
+    out = github_output.render([])
+    assert out.startswith("<!-- slopcheck -->")
+    assert "未发现问题" in out
+
+
+def test_github_table():
+    out = github_output.render(_F)
+    assert "<!-- slopcheck -->" in out
+    assert "a.py:3" in out
+    assert "`x`" in out
