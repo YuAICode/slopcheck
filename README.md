@@ -3,7 +3,7 @@
 > AI-aware code review —— 专审 **AI 生成代码**的特有失败模式，用代码知识图谱做**确定性事实校验**。
 > 通用 review 工具靠 LLM 读 diff（LLM 自己也会幻觉）；slopcheck 用 [graphify](https://github.com/) 的图谱确定性地回答"这个调用/包到底存不存在"。
 
-详细设计见 [`../E1-AI代码验证-spec.md`](../E1-AI代码验证-spec.md)。
+详细设计见 [`docs/DESIGN.md`](./docs/DESIGN.md)。
 
 ## 状态：M1（脚手架）
 
