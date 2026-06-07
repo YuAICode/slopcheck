@@ -12,6 +12,7 @@ from .deps import load_python_deps
 from .diff import get_git_diff, parse_unified_diff
 from .graph import GraphIndex
 from .models import Severity
+from .output import json_output
 from .output.terminal import render
 
 
@@ -24,6 +25,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--diff-file", help="从文件读取 unified diff（默认跑 git diff）")
     ap.add_argument("--git-args", default="", help="附加给 git diff 的参数，如 'HEAD~1'")
     ap.add_argument("--strict", action="store_true", help="warning 也算失败（退出码 1）")
+    ap.add_argument(
+        "--format",
+        choices=["terminal", "json"],
+        default="terminal",
+        help="输出格式（json 供 CI / Action 集成）",
+    )
     args = ap.parse_args(argv)
 
     repo = Path(args.repo).resolve()
@@ -43,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     for check in ALL_CHECKS:
         findings.extend(check.run(files, ctx))
 
-    print(render(findings))
+    print(json_output.render(findings) if args.format == "json" else render(findings))
 
     has_error = any(f.severity == Severity.ERROR for f in findings)
     has_warn = any(f.severity == Severity.WARNING for f in findings)
