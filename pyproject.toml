@@ -2,7 +2,20 @@
 name = "slopcheck"
 version = "0.1.0"
 description = "AI-aware code review: catch hallucinations in AI-generated diffs using a code knowledge graph."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
+authors = [{ name = "YuAICode" }]
+keywords = ["code-review", "ai", "static-analysis", "github-action", "slopsquatting", "tree-sitter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = []
 
 [project.optional-dependencies]
@@ -12,6 +25,11 @@ multilang = ["tree-sitter>=0.21", "tree-sitter-language-pack>=0.2"]
 [project.scripts]
 slopcheck = "slopcheck.cli:main"
 slopcheck-review = "slopcheck._review:main"
+
+[project.urls]
+Homepage = "https://github.com/YuAICode/slopcheck"
+Repository = "https://github.com/YuAICode/slopcheck"
+Issues = "https://github.com/YuAICode/slopcheck/issues"
 
 [build-system]
 requires = ["hatchling"]

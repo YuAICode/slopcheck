@@ -5,9 +5,9 @@
 
 详细设计见 [`docs/DESIGN.md`](./docs/DESIGN.md)。
 
-## 状态：M1（脚手架）
+## 状态：v0.1.0
 
-已实现 **A 层第一个确定性检查**：`hallucinated-import`——抓 AI 幻觉/未声明的 import（含 slopsquatting 供应链风险）。
+A 层（确定性 + 图谱）+ B 层（LLM）+ 多语言（Python / JS / Go）+ GitHub Action 均已就位。
 
 | 层 | 检查 | 状态 |
 | --- | --- | --- |
