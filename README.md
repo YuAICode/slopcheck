@@ -18,7 +18,12 @@
 | B（LLM，需 `--enable-llm`） | fake-test / scope-creep | ✅ |
 | B（LLM） | drift | ⬜（暂不做，易误报） |
 
-**语言支持**：Python（全部检查）；JS/TS（package.json + node 内置）、Go（go.mod + std）的 `hallucinated-import`。JS/Go 的 AST 类检查（stub/swallow，需 tree-sitter）进行中。
+**语言支持**：
+- **Python**：全部检查（内置 AST）。
+- **JS/TS**：`hallucinated-import`（package.json + node 内置）、`stub-implementation`（throw-only 桩）、`swallowed-exception`（空 catch）。
+- **Go**：`hallucinated-import`（go.mod + std）、`stub-implementation`（panic-only 桩）。
+
+> JS/Go 的 AST 类检查需可选依赖 `[multilang]`（tree-sitter）：`uv sync --extra multilang`。未装时这些检查自动跳过，不影响 Python 与 import 检查。
 
 ## 用法
 

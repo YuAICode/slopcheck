@@ -40,7 +40,7 @@ runs:
           git diff HEAD~1 > /tmp/slop.diff 2>/dev/null || git diff > /tmp/slop.diff
         fi
 
-        RUN="uvx --quiet --from $ACTION_PATH slopcheck --repo $GITHUB_WORKSPACE --diff-file /tmp/slop.diff"
+        RUN="uvx --quiet --with tree-sitter-language-pack --from $ACTION_PATH slopcheck --repo $GITHUB_WORKSPACE --diff-file /tmp/slop.diff"
 
         # 人读结果进 job summary
         $RUN >> "$GITHUB_STEP_SUMMARY" || true
