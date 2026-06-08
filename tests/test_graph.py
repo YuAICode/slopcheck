@@ -27,3 +27,17 @@ def test_defined_in():
 
 def test_missing_graph_returns_none(tmp_path):
     assert GraphIndex.load(tmp_path) is None
+
+
+def test_tested_from_calls():
+    data = {
+        "nodes": [
+            {"id": "t", "label": "test_foo()", "source_file": "tests/test_a.py"},
+            {"id": "f", "label": "foo()", "source_file": "a.py"},
+            {"id": "g", "label": "bar()", "source_file": "a.py"},
+        ],
+        "links": [{"relation": "calls", "source": "t", "target": "f"}],
+    }
+    idx = GraphIndex.from_data(data)
+    assert idx.is_tested("foo")  # 被 test 文件节点 calls
+    assert not idx.is_tested("bar")  # 没被测试调用

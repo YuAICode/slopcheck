@@ -13,10 +13,10 @@
 | --- | --- | --- |
 | A（确定性） | hallucinated-import | ✅ M1 |
 | A（纯 AST） | stub-implementation / swallowed-exception | ✅ M1.x |
-| A（图谱） | hallucinated-symbol / reuse-existing | ✅ M1.x |
+| A（图谱） | hallucinated-symbol / reuse-existing / missing-test | ✅ |
 | A（图谱） | signature-mismatch | ⬜ |
-| B（LLM，需 `--enable-llm`） | fake-test / scope-creep | ✅ M2 |
-| B（LLM） | missing-test / drift | ⬜ |
+| B（LLM，需 `--enable-llm`） | fake-test / scope-creep | ✅ |
+| B（LLM） | drift | ⬜（暂不做，易误报） |
 
 ## 用法
 

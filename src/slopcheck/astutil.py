@@ -32,6 +32,11 @@ def added_linenos(f: FileDiff) -> set[int]:
     return {al.lineno for al in f.added}
 
 
+def is_test_file(path: str) -> bool:
+    base = path.rsplit("/", 1)[-1]
+    return "/tests/" in path or base.startswith("test_") or base.endswith("_test.py")
+
+
 def _strip_docstring(body: list[ast.stmt]) -> list[ast.stmt]:
     if (
         body

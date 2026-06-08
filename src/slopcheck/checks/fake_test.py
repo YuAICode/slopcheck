@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import ast
 
-from ..astutil import added_linenos, parse, read_source
+from ..astutil import added_linenos, is_test_file, parse, read_source
 from ..models import Finding, Severity
 from .base import Check, CheckContext
 
@@ -19,11 +19,6 @@ _INSTRUCTION = (
 )
 
 
-def _is_test_file(path: str) -> bool:
-    base = path.rsplit("/", 1)[-1]
-    return "/tests/" in path or base.startswith("test_") or base.endswith("_test.py")
-
-
 class FakeTest(Check):
     id = "fake-test"
 
@@ -32,7 +27,7 @@ class FakeTest(Check):
         if ctx.llm is None:
             return findings
         for f in files:
-            if f.language != "python" or not _is_test_file(f.path):
+            if f.language != "python" or not is_test_file(f.path):
                 continue
             src = read_source(ctx.repo, f.path)
             if src is None:
