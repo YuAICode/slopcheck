@@ -1,6 +1,6 @@
 from slopcheck.checks.base import CheckContext
 from slopcheck.checks.hallucinated_import import HallucinatedImport
-from slopcheck.deps import load_js_deps, load_python_deps
+from slopcheck.deps import load_go_deps, load_js_deps, load_python_deps
 from slopcheck.diff import parse_unified_diff
 
 
@@ -86,3 +86,30 @@ def test_js_flags_unknown_imports(tmp_path):
     assert "@scope/missing" in msgs
     assert "react" not in msgs
     assert "'fs'" not in msgs
+
+
+def _make_go_diff(lines):
+    body = "\n".join("+" + line for line in lines)
+    return f"--- a/m.go\n+++ b/m.go\n@@ -0,0 +1,{len(lines)} @@\n{body}\n"
+
+
+def test_go_flags_unknown_imports(tmp_path):
+    (tmp_path / "go.mod").write_text(
+        "module github.com/me/proj\n\nrequire (\n\tgithub.com/real/dep v1.2.3\n)\n"
+    )
+    diff = _make_go_diff(
+        [
+            'import "fmt"',  # std → 不报
+            '\t"github.com/real/dep"',  # 已声明 → 不报
+            '\t"github.com/real/dep/sub"',  # 子包 → 不报
+            '\t"github.com/ghost/missing"',  # 未声明 → 报
+            '\t"github.com/me/proj/internal"',  # 本项目 → 不报
+        ]
+    )
+    ctx = CheckContext(
+        repo=tmp_path, python_deps=None, graph=None, go_deps=load_go_deps(tmp_path)
+    )
+    findings = HallucinatedImport().run(parse_unified_diff(diff), ctx)
+    msgs = " ".join(f.message for f in findings)
+    assert len(findings) == 1
+    assert "github.com/ghost/missing" in msgs

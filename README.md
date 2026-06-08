@@ -18,7 +18,7 @@
 | B（LLM，需 `--enable-llm`） | fake-test / scope-creep | ✅ |
 | B（LLM） | drift | ⬜（暂不做，易误报） |
 
-**语言支持**：Python（全部检查）；JS/TS（`hallucinated-import`，基于 package.json + node 内置）。其余语言（Go）与 JS 的 AST 类检查（stub/swallow，需 tree-sitter）渐进中。
+**语言支持**：Python（全部检查）；JS/TS（package.json + node 内置）、Go（go.mod + std）的 `hallucinated-import`。JS/Go 的 AST 类检查（stub/swallow，需 tree-sitter）进行中。
 
 ## 用法
 

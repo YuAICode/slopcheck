@@ -20,7 +20,9 @@ _PY_IMPORT = re.compile(r"^\s*import\s+(.+)")
 
 # JS/TS：import ... from 'x' / import 'x' / require('x') / export ... from 'x'
 _JS_FROM = re.compile(r"""(?:from|require\s*\(|^\s*import\s+|^\s*export\s+.*\bfrom)\s*['"]([^'"]+)['"]""")
-_JS_SPEC = re.compile(r"""['"]([^'"]+)['"]""")
+
+# Go：整行就是一个被引号包裹的 import 路径（可带 alias / import 前缀 / _ . 别名）
+_GO_IMPORT = re.compile(r'^\s*(?:import\s+)?(?:[A-Za-z_.]\w*\s+|_\s+)?"([^"]+)"\s*$')
 
 
 class HallucinatedImport(Check):
@@ -33,6 +35,8 @@ class HallucinatedImport(Check):
                 findings.extend(self._python(f, ctx))
             elif f.language == "js":
                 findings.extend(self._js(f, ctx))
+            elif f.language == "go":
+                findings.extend(self._go(f, ctx))
         return findings
 
     # ---- Python ----
@@ -99,6 +103,22 @@ class HallucinatedImport(Check):
             parts = spec.split("/")
             return "/".join(parts[:2]) if len(parts) >= 2 else spec
         return spec.split("/")[0]
+
+    # ---- Go ----
+
+    def _go(self, f, ctx: CheckContext):
+        deps = ctx.go_deps
+        if deps is None:
+            return []
+        out = []
+        for al in f.added:
+            m = _GO_IMPORT.match(al.text)
+            if not m:
+                continue
+            imp = m.group(1)
+            if not deps.is_known(imp):
+                out.append(self._finding(f.path, al, f'import "{imp}"', imp))
+        return out
 
     @staticmethod
     def _finding(path, al, what, name):

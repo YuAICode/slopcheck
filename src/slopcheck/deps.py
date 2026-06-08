@@ -144,3 +144,48 @@ def load_js_deps(repo: Path) -> JsDeps | None:
         if isinstance(section, dict):
             declared.update(section.keys())
     return JsDeps(declared)
+
+
+# ---- Go ----
+
+_GOMOD_REQUIRE = re.compile(r"^([^\s()]+)\s+v\S+")
+
+
+class GoDeps:
+    def __init__(self, modules: set[str], own: str):
+        self.modules = modules  # go.mod require 的 module path
+        self.own = own  # 本项目 module path
+
+    def is_known(self, imp: str) -> bool:
+        first = imp.split("/")[0]
+        if "." not in first:
+            return True  # 无域名段 → 标准库（fmt / os / net/http ...）
+        if self.own and (imp == self.own or imp.startswith(self.own + "/")):
+            return True  # 本项目内部包
+        return any(imp == m or imp.startswith(m + "/") for m in self.modules)
+
+
+def load_go_deps(repo: Path) -> GoDeps | None:
+    gm = repo / "go.mod"
+    if not gm.exists():
+        return None
+    own = ""
+    modules: set[str] = set()
+    in_block = False
+    for line in gm.read_text().splitlines():
+        s = line.strip()
+        if s.startswith("module "):
+            own = s[len("module ") :].strip()
+        elif s.startswith("require ("):
+            in_block = True
+        elif in_block and s == ")":
+            in_block = False
+        elif in_block:
+            m = _GOMOD_REQUIRE.match(s)
+            if m:
+                modules.add(m.group(1))
+        elif s.startswith("require "):
+            m = _GOMOD_REQUIRE.match(s[len("require ") :].strip())
+            if m:
+                modules.add(m.group(1))
+    return GoDeps(modules, own)
