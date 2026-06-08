@@ -1,5 +1,10 @@
 # slopcheck
 
+[![CI](https://github.com/YuAICode/slopcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/YuAICode/slopcheck/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/slopcheck.svg)](https://pypi.org/project/slopcheck/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://pypi.org/project/slopcheck/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+
 > AI-aware code review —— 专审 **AI 生成代码**的特有失败模式，用代码知识图谱做**确定性事实校验**。
 > 通用 review 工具靠 LLM 读 diff（LLM 自己也会幻觉）；slopcheck 用 [graphify](https://github.com/) 的图谱确定性地回答"这个调用/包到底存不存在"。
 
@@ -24,6 +29,19 @@ A 层（确定性 + 图谱）+ B 层（LLM）+ 多语言（Python / JS / Go）+ 
 - **Go**：`hallucinated-import`（go.mod + std）、`stub-implementation`（panic-only 桩）。
 
 > JS/Go 的 AST 类检查需可选依赖 `[multilang]`（tree-sitter）：`uv sync --extra multilang`。未装时这些检查自动跳过，不影响 Python 与 import 检查。
+
+## 安装
+
+```bash
+# 直接用，无需安装（推荐）
+uvx slopcheck --help
+
+# 或装进环境
+pip install slopcheck
+
+# 启用可选功能：LLM 检查 / JS·Go 多语言检查
+pip install 'slopcheck[llm,multilang]'
+```
 
 ## 用法
 
