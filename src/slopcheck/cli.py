@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .checks import ALL_CHECKS
 from .checks.base import CheckContext
-from .deps import load_python_deps
+from .deps import load_js_deps, load_python_deps
 from .diff import get_git_diff, parse_unified_diff
 from .graph import GraphIndex
 from .models import Severity
@@ -59,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     ctx = CheckContext(
         repo=repo,
         python_deps=load_python_deps(repo),
+        js_deps=load_js_deps(repo),
         graph=GraphIndex.load(repo),
         llm=_build_llm(args.enable_llm, repo),
         pr_description=args.pr_description,

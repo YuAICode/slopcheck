@@ -1,6 +1,6 @@
 from slopcheck.checks.base import CheckContext
 from slopcheck.checks.hallucinated_import import HallucinatedImport
-from slopcheck.deps import load_python_deps
+from slopcheck.deps import load_js_deps, load_python_deps
 from slopcheck.diff import parse_unified_diff
 
 
@@ -58,3 +58,31 @@ def test_multi_import_split(tmp_path):
     )
     assert len(findings) == 1
     assert "fakepkg_zzz" in findings[0].message
+
+
+def _make_js_diff(lines):
+    body = "\n".join("+" + line for line in lines)
+    return f"--- a/m.js\n+++ b/m.js\n@@ -0,0 +1,{len(lines)} @@\n{body}\n"
+
+
+def test_js_flags_unknown_imports(tmp_path):
+    (tmp_path / "package.json").write_text('{"dependencies": {"react": "^18"}}')
+    diff = _make_js_diff(
+        [
+            "import a from 'react';",  # 已声明 → 不报
+            "import b from 'ghost-pkg-zz';",  # 未声明 → 报
+            "const fs = require('fs');",  # node 内置 → 不报
+            "import c from './local';",  # 相对路径 → 跳过
+            "import d from '@scope/missing';",  # scoped 未声明 → 报
+        ]
+    )
+    ctx = CheckContext(
+        repo=tmp_path, python_deps=None, graph=None, js_deps=load_js_deps(tmp_path)
+    )
+    findings = HallucinatedImport().run(parse_unified_diff(diff), ctx)
+    msgs = " ".join(f.message for f in findings)
+    assert len(findings) == 2
+    assert "ghost-pkg-zz" in msgs
+    assert "@scope/missing" in msgs
+    assert "react" not in msgs
+    assert "'fs'" not in msgs

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import tomllib
@@ -106,3 +107,40 @@ def _scan_local_modules(repo: Path) -> set[str]:
             elif p.suffix == ".py":
                 names.add(p.stem)
     return names
+
+
+# ---- JS / TS ----
+
+_NODE_BUILTINS = {
+    "assert", "buffer", "child_process", "cluster", "console", "crypto", "dgram",
+    "dns", "events", "fs", "http", "http2", "https", "module", "net", "os", "path",
+    "perf_hooks", "process", "punycode", "querystring", "readline", "stream",
+    "string_decoder", "timers", "tls", "tty", "url", "util", "v8", "vm",
+    "worker_threads", "zlib",
+}
+
+
+class JsDeps:
+    def __init__(self, declared: set[str]):
+        self.declared = declared  # package.json 声明的包名
+
+    def is_known(self, pkg: str) -> bool:
+        if pkg.startswith("node:"):
+            return True
+        return pkg in _NODE_BUILTINS or pkg in self.declared
+
+
+def load_js_deps(repo: Path) -> JsDeps | None:
+    pj = repo / "package.json"
+    if not pj.exists():
+        return None
+    try:
+        data = json.loads(pj.read_text())
+    except (ValueError, OSError):
+        return JsDeps(set())
+    declared: set[str] = set()
+    for key in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+        section = data.get(key)
+        if isinstance(section, dict):
+            declared.update(section.keys())
+    return JsDeps(declared)

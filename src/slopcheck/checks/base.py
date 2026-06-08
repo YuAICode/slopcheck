@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..deps import PythonDeps
+from ..deps import JsDeps, PythonDeps
 from ..graph import GraphIndex
 from ..models import FileDiff, Finding
 
@@ -15,6 +15,7 @@ class CheckContext:
     repo: Path
     python_deps: PythonDeps | None
     graph: GraphIndex | None
+    js_deps: JsDeps | None = None
     llm: object | None = None  # B 层 judge（有 .judge() 的对象），None 则跳过 LLM 检查
     pr_description: str = ""
 
