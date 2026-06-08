@@ -25,6 +25,7 @@ runs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         BASE_SHA: ${{ github.event.pull_request.base.sha }}
         REPO: ${{ github.repository }}
+        COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
         STRICT: ${{ inputs.strict }}
         ACTION_PATH: ${{ github.action_path }}
       run: |
@@ -54,6 +55,10 @@ runs:
           else
             gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@/tmp/slop_body.md >/dev/null
           fi
+
+          # 行级 inline 评论（sticky：先删旧的再发）
+          $RUN --format json > /tmp/slop.json
+          uvx --quiet --from "$ACTION_PATH" slopcheck-review < /tmp/slop.json || true
         fi
 
         # 退出码：strict 时有 warning/error 则失败

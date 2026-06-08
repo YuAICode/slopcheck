@@ -10,6 +10,7 @@ llm = ["anthropic>=0.40"]
 
 [project.scripts]
 slopcheck = "slopcheck.cli:main"
+slopcheck-review = "slopcheck._review:main"
 
 [build-system]
 requires = ["hatchling"]
